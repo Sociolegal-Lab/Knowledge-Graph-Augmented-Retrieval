@@ -70,7 +70,6 @@ def select_nodes_by_type(G, type_use_content):
 
         if node_type in type_use_content:
             use_content = type_use_content[node_type]
-            # 始终将节点类型包含在保存的信息中
             selected_info = {'type': node_type}
             if use_content:
                 selected_info['content'] = node_data.get('content', '')
@@ -99,28 +98,26 @@ def find_and_categorize_predecessors_by_type(G, target_node):
     categorized_nodes = {}
     if target_node in G:
         for pred in G.predecessors(target_node):
-            node_type = G.nodes[pred].get('type', 'Unknown')  # 获取节点类型，默认为 'Unknown'
+            node_type = G.nodes[pred].get('type', 'Unknown')  
             if node_type not in categorized_nodes:
                 categorized_nodes[node_type] = []
             categorized_nodes[node_type].append(pred)
     return categorized_nodes
 
 def process_predecessors(G, target_node):
-    precis_contents = []  # 用于存储从 precis_intro 节点获得的内容
-    section_contents = []  # 用于存储从 Section 节点获得的内容
+    precis_contents = []  
+    section_contents = []  
 
     if target_node in G:
         for pred in G.predecessors(target_node):
             node_type = G.nodes[pred].get('type')
             
             if node_type == 'precis_intro':
-                # 遍历所有指向 precis_intro 的节点，并获取它们的 content
                 for precis_node in G.successors(pred):
                     if G.nodes[precis_node].get('type') == 'precis' and G.nodes[precis_node].get('language') == 'English':
                         precis_contents.append(G.nodes[precis_node].get('content', ''))
             
             elif node_type == 'Section' and G.nodes[pred].get('language') == 'en':
-                # 直接获取 Section 节点的 content
                 section_contents.append(G.nodes[pred].get('content', ''))
 
     return precis_contents, section_contents
@@ -232,7 +229,6 @@ def main(generator, task_sen, G, keyword_embeddings, conpro_embeddings, codices_
     
     print("Running step 1...")
 
-    system_input = "You are a helpful, respectful and honest assistant. Analyze the sentence and identify any possible triples. Remember, a triple consists of a subject, predicate, and object. Please extract triples (subject, relation, object) from the following sentence, and separate each triple with a comma. Use the format \"(subject, relation, object)\" and begin your response with \"The possible triples: \".If the sentence does not contain any discernible triples, simply respond with 'No'"
     user_input = "Task sentence: " + "\"" + task_sen + "\""
     results_step1 = chat_completion(generator, system_input, user_input)
     triples_list = extract_triples(results_step1)
@@ -324,7 +320,6 @@ def main(generator, task_sen, G, keyword_embeddings, conpro_embeddings, codices_
     end = time.time()
     print("Time taken: ", end - start)
     print("Running step 5...")
-    system_input = "You are a helpful, respectful and honest assistant. Before listing the words and their corresponding entity types from the following text, verify that each entity you identify actually appears in the text. The entities include only Person, Court, Law, Legal Case, and Location. Do not include any entities that are not explicitly mentioned in the text. Format the response by placing the entity type before each group of words, separated by a \"colon\". If an entity type is not present in the text, output 'NULL' for that category. Separate non-continuous entities of the same type with a comma. Additionally, I will provide you with some reference articles. Please consider the knowledge from these contents to provide a more accurate response."
     reference_articles = "Reference Articles: \n" + ref1
     final_input = user_input + "\n" + reference_articles
     print(final_input)
@@ -337,15 +332,12 @@ def main(generator, task_sen, G, keyword_embeddings, conpro_embeddings, codices_
     results_ans2 = chat_completion(generator, system_input, final_input)
     print(results_ans2)
 
-    # print(results_step1, results_ans1, results_ans2)
     return results_step1, results_ans1, results_ans2
 
 
 if __name__ == "__main__":
     start = time.time()
 
-    # , "5_ro", "6_en", "7_tr", "2_pt"
-    # , "4_de"
     lans = ["8_zh_tw"]
     addis = ["train", "test", "dev"]
     print("Loading inital data graph...")
